@@ -1,6 +1,4 @@
 // ServiceWorkerGlobalScope
-console.log(self)
-
 // https://w3c.github.io/ServiceWorker/#serviceworkerglobalscope-interface
 
 // https://w3c.github.io/ServiceWorker/#service-worker-global-scope-install-event
