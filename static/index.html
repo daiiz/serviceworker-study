@@ -7,5 +7,17 @@
   </head>
   <body>
     <p>ServiceWorker</p>
+    <button id='postTestMessageButton'>postMessage test</button>
+
+    <script>
+      const postTestMessageButton = document.querySelector('#postTestMessageButton')
+      postTestMessageButton.addEventListener('click', async e => {
+        const data = await postMessage({
+          title: 'test',
+          body: 'Hello, I am your client!'
+        })
+        console.log('#', data)
+      })
+    </script>
   </body>
 </html>
