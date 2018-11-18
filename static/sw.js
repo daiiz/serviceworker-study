@@ -40,11 +40,12 @@ self.addEventListener('message', event => {
   const {title, body} = event.data
   console.log('onmessage', event, body)
   // return to sender
+  const clientPort = event.ports[0]
   event.waitUntil(async function () {
     // XXX: ここでprefetchとかできる
-    event.ports[0].postMessage({
+    clientPort.postMessage({
       title,
-      result: '!!!'
+      result: 'from serviceworker'
     })
   }())
 })
