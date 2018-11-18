@@ -65,4 +65,28 @@ const trackWaitingWorker = registration => {
   }
 }
 
+const getRegistration = async () => {
+  const {serviceWorker} = navigator
+  return serviceWorker && serviceWorker.getRegistration('/')
+}
+
+// https://googlechrome.github.io/samples/service-worker/post-message/
+const postMessage = ({title, body}) => {
+  const {controller} = navigator.serviceWorker
+  if (!controller) return
+
+  return new Promise((resolve, reject) => {
+    // https://gyazo.com/06e98f9d067a35be4eaf7f5e3f0f51c7
+    const messageChannel = new MessageChannel()
+    messageChannel.port1.onmessage = event => {
+      if (event.data && event.data.error) {
+        reject(event.data.error)
+      } else {
+        resolve(event.data)
+      }
+    }
+    controller.postMessage({title, body}, [messageChannel.port2])
+  })
+}
+
 register()

@@ -31,7 +31,23 @@ self.addEventListener('activate', extendableEvent => {
 
 // https://w3c.github.io/ServiceWorker/#service-worker-global-scope-install-event
 self.addEventListener('fetch', fetchEvent => {
-  console.log('fetch', fetchEvent)
+  console.log('onfetch', fetchEvent)
+})
+
+// https://w3c.github.io/ServiceWorker/#extendablemessageevent
+// extendableMessageEvent.source of the message events is Client object
+self.addEventListener('message', event => {
+  const {title, body} = event.data
+  console.log('onmessage', event, body)
+  // return to sender
+  const clientPort = event.ports[0]
+  event.waitUntil(async function () {
+    // XXX: ここでprefetchとかできる
+    clientPort.postMessage({
+      title,
+      result: 'from serviceworker'
+    })
+  }())
 })
 
 const delay = sec => new Promise(resolve => setTimeout(resolve, 1000 * sec))
