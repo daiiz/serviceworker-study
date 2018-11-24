@@ -32,6 +32,7 @@ self.addEventListener('activate', extendableEvent => {
 // https://w3c.github.io/ServiceWorker/#service-worker-global-scope-install-event
 self.addEventListener('fetch', fetchEvent => {
   console.log('onfetch', fetchEvent)
+  return
 })
 
 // https://w3c.github.io/ServiceWorker/#extendablemessageevent
@@ -48,6 +49,14 @@ self.addEventListener('message', event => {
       result: 'from serviceworker'
     })
   }())
+})
+
+self.addEventListener('sync', event => {
+  if (event.tag === 'send-tweet') {
+    event.waitUntil(async function () {
+
+    }())
+  }
 })
 
 const delay = sec => new Promise(resolve => setTimeout(resolve, 1000 * sec))
