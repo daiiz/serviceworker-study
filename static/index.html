@@ -64,8 +64,8 @@
           headers: {'Content-Type': 'application/json'}
         })
         try {
-          // await fetch(req.clone())
-          await addToCache(req, 'tweet')
+          await fetch(req.clone())
+          // await addToCache(req, 'tweet')
         } catch (err) {
           await addToCache(req, 'tweet')
         }
