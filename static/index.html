@@ -43,7 +43,8 @@
           headers: {
             'X-Serviceworker-Cached': time,
             'X-Tag': tag,
-            'X-Method': req.method
+            'X-Method': req.method,
+            'X-Pathname': new URL(req.url).pathname
           }
         })
         // 架空のResponse

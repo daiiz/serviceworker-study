@@ -58,7 +58,8 @@ const findUnsents = async tag => {
   for (const req of reqs) {
     const res = await cache.match(req)
     unsents.push({
-      url: req.url,
+      key: req.url,
+      pathname: req.headers.get('x-pathname'),
       method: req.headers.get('x-method'),
       body: (await res.json()).body
     })
@@ -66,10 +67,9 @@ const findUnsents = async tag => {
   return unsents
 }
 
-const deleteUnsents = async tag => {
+const deleteUnsents = async urls => {
   const cache = await caches.open('unsent')
-  const reqs = (await cache.keys()).filter(req => req.headers.get('x-tag') === tag)
-  for (const req of reqs) await cache.delete(req)
+  for (const url of urls) await cache.delete(url)
 }
 
 self.addEventListener('sync', event => {
@@ -78,8 +78,8 @@ self.addEventListener('sync', event => {
     event.waitUntil(async function () {
       const unsents = await findUnsents('tweet')
       for (const item of unsents) {
-        const {method, url, body} = item
-        const res = await fetch(url, {
+        const {method, pathname, body, key} = item
+        const res = await fetch(pathname, {
           method,
           body: JSON.stringify(body),
           headers: {
@@ -87,7 +87,7 @@ self.addEventListener('sync', event => {
           }
         })
       }
-      await deleteUnsents('tweet')
+      await deleteUnsents(unsents.map(item => item.key))
     }())
   }
 })
