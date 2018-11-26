@@ -51,10 +51,43 @@ self.addEventListener('message', event => {
   }())
 })
 
-self.addEventListener('sync', event => {
-  if (event.tag === 'send-tweet') {
-    event.waitUntil(async function () {
+const findUnsents = async tag => {
+  const cache = await caches.open('unsent')
+  const reqs = (await cache.keys()).filter(req => req.headers.get('x-tag') === tag)
+  const unsents = []
+  for (const req of reqs) {
+    const res = await cache.match(req)
+    unsents.push({
+      url: req.url,
+      method: req.headers.get('x-method'),
+      body: (await res.json()).body
+    })
+  }
+  return unsents
+}
 
+const deleteUnsents = async tag => {
+  const cache = await caches.open('unsent')
+  const reqs = (await cache.keys()).filter(req => req.headers.get('x-tag') === tag)
+  for (const req of reqs) await cache.delete(req)
+}
+
+self.addEventListener('sync', event => {
+  console.log('fire syncEvent', event)
+  if (event.tag === 'send:tweet') {
+    event.waitUntil(async function () {
+      const unsents = await findUnsents('tweet')
+      for (const item of unsents) {
+        const {method, url, body} = item
+        const res = await fetch(url, {
+          method,
+          body: JSON.stringify(body),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      }
+      await deleteUnsents('tweet')
     }())
   }
 })

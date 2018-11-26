@@ -32,18 +32,30 @@
         timeout: 10 * 1000
       })
 
-      const addToCache = async req => {
-        const cache = await caches.open('tweet')
+      const addToCache = async (req, tag) => {
+        const cache = await caches.open('unsent')
         const body = await req.json()
-        const request = new Request(req.url, {
+        // 架空のリクエスト
+        // GET method以外は入れられない
+        const time = new Date().getTime()
+        const request = new Request(`${req.url}?${time}`, {
           method: 'GET',
-          body
+          headers: {
+            'X-Serviceworker-Cached': time,
+            'X-Tag': tag,
+            'X-Method': req.method
+          }
         })
-        return cache.put(request, new Response())
+        // 架空のResponse
+        // 実際のリクエストをResponseとして入れる
+        const response = new Response(JSON.stringify({body}), {
+          status: 200
+        })
+        return cache.put(request, response)
       }
 
       tweetButton.addEventListener('click', async e => {
-        const req = new Request(`/api/tweet?${new Date().getTime()}`, {
+        const req = new Request(`/api/tweet`, {
           method: 'POST',
           body: JSON.stringify({
             text: tweetText.value || tweetText.placeholder
@@ -51,11 +63,16 @@
           headers: {'Content-Type': 'application/json'}
         })
         try {
-          await fetch(req.clone())
-          console.log('#', req)
+          // await fetch(req.clone())
+          await addToCache(req, 'tweet')
         } catch (err) {
-          await addToCache(req)
+          await addToCache(req, 'tweet')
         }
+      })
+    </script>
+    <script>
+      window.addEventListener('online', e => {
+        console.log('changed to ONLINE!')
       })
     </script>
   </body>

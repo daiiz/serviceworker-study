@@ -11,7 +11,7 @@ app.use(serveStatic(path.resolve(PWD)))
 app.use(serveStatic(path.resolve(PWD, 'static')))
 
 app.post('/api/tweet', (req, res) => {
-  console.log(Object.keys(req))
+  console.log('>', req.body)
   const result = JSON.stringify({})
   res.end(result)
 })
