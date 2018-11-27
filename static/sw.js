@@ -1,3 +1,5 @@
+importScripts('/static/caches.js')
+
 // ServiceWorkerGlobalScope
 // https://w3c.github.io/ServiceWorker/#serviceworkerglobalscope-interface
 
@@ -32,6 +34,19 @@ self.addEventListener('activate', extendableEvent => {
 // https://w3c.github.io/ServiceWorker/#service-worker-global-scope-install-event
 self.addEventListener('fetch', fetchEvent => {
   console.log('onfetch', fetchEvent)
+  const {url, method} = fetchEvent.request
+  const {pathname, hostname, origin} = new URL(url)
+
+  if (method.toUpperCase() !== 'GET') return
+  if (pathname === '/') {
+    fetchEvent.respondWith(async function () {
+      return respondCacheFirst('assets', `${origin}/static/index.html`)
+    }())
+  } else if (hostname === 'cdnjs.cloudflare.com' || pathname.startsWith('/static')) {
+    fetchEvent.respondWith(async function () {
+      return respondCacheFirst('assets', url)
+    }())
+  }
   return
 })
 
