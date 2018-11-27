@@ -46,6 +46,12 @@ async function register () {
     })
 
     trackWaitingWorker(registration)
+
+    // https://github.com/WICG/BackgroundSync/blob/master/explainer.md
+    if (registration) {
+      await registration.sync.register('send:tweet')
+      console.log('registration.sync succeeded')
+    }
   } catch (err) {
     console.error(err)
   }

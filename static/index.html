@@ -3,20 +3,78 @@
   <head>
     <title>sw</title>
     <meta charset='utf-8' />
+    <link rel='manifest' href='/static/manifest.json'>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js'></script>
     <script src='/static/index.js'></script>
   </head>
   <body>
     <p>ServiceWorker</p>
-    <button id='postTestMessageButton'>postMessage test</button>
-
+    <div>
+      <button id='postMessageToSW'>postMessage to SW</button>
+    </div>
+    <div>
+      <input id='tweet-text' type='text' value='' placeholder='hello!' />
+      <button id='tweet'>tweet</button>
+    </div>
     <script>
-      const postTestMessageButton = document.querySelector('#postTestMessageButton')
-      postTestMessageButton.addEventListener('click', async e => {
+      const postMessageToSWButton = document.querySelector('#postMessageToSW')
+      postMessageToSWButton.addEventListener('click', async e => {
         const data = await postMessage({
           title: 'test',
           body: 'Hello, I am your client!'
         })
         console.log('received', data)
+      })
+    </script>
+    <script>
+      const tweetButton = document.querySelector('#tweet')
+      const tweetText = document.querySelector('#tweet-text')
+      const apiClient = axios.create({
+        timeout: 10 * 1000
+      })
+
+      const addToCache = async (req, tag) => {
+        const cache = await caches.open('unsent')
+        const body = await req.json()
+        // 架空のリクエスト
+        // GET method以外は入れられない
+        const time = new Date().getTime()
+        const request = new Request(`${req.url}?${time}`, {
+          method: 'GET',
+          headers: {
+            'X-Serviceworker-Cached': time,
+            'X-Tag': tag,
+            'X-Method': req.method,
+            'X-Pathname': new URL(req.url).pathname
+          }
+        })
+        // 架空のResponse
+        // 実際のリクエストをResponseとして入れる
+        const response = new Response(JSON.stringify({body}), {
+          status: 200
+        })
+        return cache.put(request, response)
+      }
+
+      tweetButton.addEventListener('click', async e => {
+        const req = new Request(`/api/tweet`, {
+          method: 'POST',
+          body: JSON.stringify({
+            text: tweetText.value || tweetText.placeholder
+          }),
+          headers: {'Content-Type': 'application/json'}
+        })
+        try {
+          await fetch(req.clone())
+          // await addToCache(req, 'tweet')
+        } catch (err) {
+          await addToCache(req, 'tweet')
+        }
+      })
+    </script>
+    <script>
+      window.addEventListener('online', e => {
+        console.log('changed to ONLINE!')
       })
     </script>
   </body>

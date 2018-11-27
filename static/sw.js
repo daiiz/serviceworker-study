@@ -1,3 +1,6 @@
+importScripts('/static/caches.js')
+importScripts('/static/background-sync.js')
+
 // ServiceWorkerGlobalScope
 // https://w3c.github.io/ServiceWorker/#serviceworkerglobalscope-interface
 
@@ -32,6 +35,20 @@ self.addEventListener('activate', extendableEvent => {
 // https://w3c.github.io/ServiceWorker/#service-worker-global-scope-install-event
 self.addEventListener('fetch', fetchEvent => {
   console.log('onfetch', fetchEvent)
+  const {url, method} = fetchEvent.request
+  const {pathname, hostname, origin} = new URL(url)
+
+  if (method.toUpperCase() !== 'GET') return
+  if (pathname === '/') {
+    fetchEvent.respondWith(async function () {
+      return respondCacheFirst('assets', `${origin}/static/index.html`)
+    }())
+  } else if (hostname === 'cdnjs.cloudflare.com' || pathname.startsWith('/static')) {
+    fetchEvent.respondWith(async function () {
+      return respondCacheFirst('assets', url)
+    }())
+  }
+  return
 })
 
 // https://w3c.github.io/ServiceWorker/#extendablemessageevent
@@ -48,6 +65,26 @@ self.addEventListener('message', event => {
       result: 'from serviceworker'
     })
   }())
+})
+
+self.addEventListener('sync', event => {
+  console.log('fire syncEvent', event)
+  if (event.tag === 'send:tweet') {
+    event.waitUntil(async function () {
+      const unsents = await findUnsents('tweet')
+      for (const item of unsents) {
+        const {method, pathname, body, key} = item
+        const res = await fetch(pathname, {
+          method,
+          body: JSON.stringify(body),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      }
+      await deleteUnsents(unsents.map(item => item.key))
+    }())
+  }
 })
 
 const delay = sec => new Promise(resolve => setTimeout(resolve, 1000 * sec))
